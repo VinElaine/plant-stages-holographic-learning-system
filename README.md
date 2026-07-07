@@ -22,7 +22,7 @@ An interactive web-based learning platform designed for Grade 4 students that te
 
 ## Developers
 
-BS Computer Engineering Thesis Group
+BS Computer Engineering Student - Vin Maghirang
 Cavite State University
 
 2026
