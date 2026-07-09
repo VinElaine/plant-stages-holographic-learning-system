@@ -1,10 +1,292 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+<meta charset="UTF-8">
+<title>Sunflower Stage Viewer</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom, #cbefff, #eef9d7);
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.viewer-page {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+    padding: 25px;
+}
+
+.model-box {
+    background: rgba(255, 255, 255, 0.70);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 20px 45px rgba(46, 125, 50, 0.18);
+}
+
+#modelViewer {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.info-panel {
+    background: rgba(255, 255, 255, 0.82);
+    border-radius: 28px;
+    padding: 28px;
+    box-shadow: 0 20px 45px rgba(46, 125, 50, 0.18);
+}
+
+.info-panel h1 {
+    color: #2e7d32;
+    margin-bottom: 15px;
+    font-size: 32px;
+}
+
+.info-panel p {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 22px;
+}
+
+.btn {
+    display: block;
+    text-align: center;
+    margin-bottom: 12px;
+    padding: 14px 20px;
+    border-radius: 16px;
+    background: #ffc646;
+    color: #222;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s ease;
+}
+
+.btn:hover {
+    background: #ffb300;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 0 28px rgba(255, 193, 7, 0.65);
+}
+
+.back {
+    background: #dff5d8;
+}
+
+.back:hover {
+    background: #bfe8b5;
+    color: #1b5e20;
+}
+
+.stage-progress {
+    display: inline-block;
+    background: #e6f6dc;
+    color: #2e7d32;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-weight: bold;
+    margin-bottom: 18px;
+}
+
+.main-description {
+    font-size: 16px;
+    line-height: 1.7;
+}
+
+.info-box {
+    background: #fff8dc;
+    border-left: 5px solid #ffc646;
+    padding: 15px;
+    border-radius: 16px;
+    margin-bottom: 18px;
+}
+
+.info-box p {
+    margin-top: 8px;
+    margin-bottom: 0;
+}
+
+.details {
+    background: #f3fbef;
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    color: #444;
+    line-height: 1.8;
+}
+
+.disabled {
+    background: #eeeeee;
+    color: #777;
+    pointer-events: none;
+}
+
+</style>
 </head>
+
 <body>
+
+<div class="viewer-page">
+    <div class="model-box">
+        <canvas id="modelViewer"></canvas>
+    </div>
+
+    <aside class="info-panel">
+    <div class="stage-progress">Stage {{ stage_id }} of 5</div>
+
+    <h1>{{ stage.icon }} {{ stage.title }}</h1>
+
+    <p class="main-description">
+        {{ stage.description }}
+    </p>
+
+    <div class="info-box">
+        <strong>🌟 Fun Fact</strong>
+        <p>{{ stage.fun_fact }}</p>
+    </div>
+
+    <div class="details">
+        <div><strong>🌱 Duration:</strong> {{ stage.duration }}</div>
+        <div><strong>💧 Needs:</strong> {{ stage.needs }}</div>
+        <div><strong>☀️ Sunlight:</strong> {{ stage.sunlight }}</div>
+    </div>
+
+    <a href="#" class="btn disabled">🔊 Narration Coming Soon</a>
+    <a href="/hologram/{{ stage_id }}/" class="btn">✨ Hologram Mode</a>
+    <a href="/stages/" class="btn back">← Back to Stages</a>
+</aside>
+
+</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const canvas = document.getElementById("modelViewer");
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(
+    45,
+    canvas.clientWidth / canvas.clientHeight,
+    0.1,
+    1000
+);
+
+camera.position.set(0, 1.5, 5);
+
+const renderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    alpha: true,
+    antialias: true
+});
+
+renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.8;
+
+// Lighting
+const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xd8ffd1, 3.5);
+scene.add(hemisphereLight);
+
+const mainLight = new THREE.DirectionalLight(0xffffff, 4.5);
+mainLight.position.set(5, 8, 5);
+scene.add(mainLight);
+
+const frontLight = new THREE.DirectionalLight(0xffffff, 2.8);
+frontLight.position.set(0, 3, 6);
+scene.add(frontLight);
+
+const sideLight = new THREE.DirectionalLight(0xffffff, 2);
+sideLight.position.set(-5, 4, -3);
+scene.add(sideLight);
+
+// Controls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 1.2;
+controls.enablePan = false;
+controls.minDistance = 1.5;
+controls.maxDistance = 12;
+
+const loader = new GLTFLoader();
+const modelPath = "/media/models/stage{{ stage_id }}.glb";
+
+loader.load(
+    modelPath,
+    function(gltf) {
+        const model = gltf.scene;
+        scene.add(model);
+
+        model.traverse((child) => {
+            if (child.isMesh && child.material) {
+                child.material.needsUpdate = true;
+            }
+        });
+
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+
+        model.position.sub(center);
+
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 2.8 / maxDim;
+        model.scale.setScalar(scale);
+
+        const newBox = new THREE.Box3().setFromObject(model);
+        const newSize = newBox.getSize(new THREE.Vector3());
+        const newCenter = newBox.getCenter(new THREE.Vector3());
+
+        controls.target.set(0, 0, 0);
+
+        const distance = Math.max(newSize.x, newSize.y, newSize.z) * 2.2;
+        camera.position.set(0, newSize.y * 0.3, distance);
+        camera.lookAt(newCenter);
+        controls.update();
+    },
+    undefined,
+    function(error) {
+        console.error("Error loading GLB:", error);
+        alert("GLB model failed to load.");
+    }
+);
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+animate();
+
+window.addEventListener("resize", () => {
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+});
+</script>
 
 </body>
 </html>

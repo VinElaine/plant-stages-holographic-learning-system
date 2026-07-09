@@ -1,198 +1,342 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Choose a Sunflower Stage</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<title>Choose a Sunflower Stage</title>
 
-        body {
-            min-height: 100vh;
-            font-family: Arial, Helvetica, sans-serif;
-            background: linear-gradient(180deg, #ccefff 0%, #f7ffe8 75%);
-            overflow-x: hidden;
-        }
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
 
-        .page {
-            min-height: 100vh;
-            padding: 60px 40px;
-            text-align: center;
-            position: relative;
-            z-index: 2;
-        }
+body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: linear-gradient(to bottom, #cbefff, #eef9d7);
+}
 
-        h1 {
-            color: #2e7d32;
-            font-size: 46px;
-            margin-bottom: 12px;
-            animation: fadeInUp 0.8s ease forwards;
-        }
+.cloud {
+    position: fixed;
+    width: 180px;
+    height: 60px;
+    background: white;
+    border-radius: 50px;
+    opacity: 0.75;
+    z-index: 0;
+    animation: floatCloud linear infinite;
+}
 
-        .subtitle {
-            font-size: 20px;
-            color: #4b4b4b;
-            margin-bottom: 45px;
-            animation: fadeInUp 1s ease forwards;
-        }
+.cloud::before,
+.cloud::after {
+    content: "";
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+}
 
-        .stage-grid {
-            max-width: 1100px;
-            margin: auto;
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 24px;
-        }
+.cloud::before {
+    width: 80px;
+    height: 80px;
+    top: -35px;
+    left: 30px;
+}
 
-       .stage-card {
-           background: rgba(255,255,255,.72);
-           backdrop-filter: blur(8px);
-           border-radius: 28px;
-           padding: 30px 22px;
-           display: flex;
-           flex-direction: column;
-           justify-content: space-between;
-        }
+.cloud::after {
+    width: 100px;
+    height: 100px;
+    top: -45px;
+    right: 25px;
+}
 
-        .stage-card:hover {
-           transform: translateY(-12px) scale(1.03);
-           box-shadow: 0 30px 60px rgba(46, 125, 50, 0.22);
-        }
+.cloud-1 {
+    top: 90px;
+    left: -250px;
+    animation-duration: 42s;
+}
 
-        .icon {
-            font-size: 54px;
-            margin-bottom: 18px;
-        }
+.cloud-2 {
+    top: 230px;
+    left: -300px;
+    transform: scale(0.75);
+    animation-duration: 55s;
+    animation-delay: 8s;
+}
 
-        .stage-number {
-            font-size: 14px;
-            font-weight: bold;
-            color: #6a8f35;
-            margin-bottom: 8px;
-        }
+.cloud-3 {
+    top: 380px;
+    left: -350px;
+    transform: scale(0.55);
+    animation-duration: 65s;
+    animation-delay: 18s;
+}
 
-        .stage-title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2e7d32;
-            margin-bottom: 14px;
-        }
+@keyframes floatCloud {
+    from { left: -350px; }
+    to { left: 110%; }
+}
 
-        .stage-desc {
-            font-size: 15px;
-            line-height: 1.5;
-            color: #555;
-            margin-bottom: 24px;
-        }
+.container {
+    position: relative;
+    z-index: 2;
+    width: 90%;
+    max-width: 1400px;
+    margin: auto;
+    text-align: center;
+    padding: 90px 0 80px;
+}
 
-        .explore {
-            display: inline-block;
-            margin-top: auto;
-            background: #f9c74f;
-            color: #1f1f1f;
-            padding: 12px 20px;
-            border-radius: 14px;
-            font-weight: bold;
-            transition: all .35s ease;
-            box-shadow: 0 10px 20px rgba(249,199,79,.35);
-        }
+h1 {
+    font-size: 58px;
+    color: #2e7d32;
+    margin-bottom: 15px;
+    animation: fadeDown 0.8s ease forwards;
+}
 
-        .back-link {
-            display: inline-block;
-            margin-top: 45px;
-            color: #2e7d32;
-            font-weight: bold;
-            text-decoration: none;
-        }
+.subtitle {
+    font-size: 23px;
+    color: #555;
+    margin-bottom: 55px;
+    animation: fadeDown 1s ease forwards;
+}
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(25px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+.stage-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 30px;
+}
 
-        @media (max-width: 1000px) {
-            .stage-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
+.stage-card {
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(8px);
+    border-radius: 30px;
+    padding: 35px 25px;
+    box-shadow: 0 20px 40px rgba(46, 125, 50, 0.13);
+    transition: 0.35s ease;
+    animation: cardFade 0.8s ease forwards;
+    opacity: 0;
+    transform: translateY(30px);
 
-        @media (max-width: 600px) {
-            .page {
-                padding: 40px 20px;
-            }
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
 
-            h1 {
-                font-size: 34px;
-            }
+.stage-card:nth-child(1) { animation-delay: 0.1s; }
+.stage-card:nth-child(2) { animation-delay: 0.22s; }
+.stage-card:nth-child(3) { animation-delay: 0.34s; }
+.stage-card:nth-child(4) { animation-delay: 0.46s; }
+.stage-card:nth-child(5) { animation-delay: 0.58s; }
 
-            .stage-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+.stage-card:hover {
+    transform: translateY(-12px) scale(1.22);
+    box-shadow: 0 35px 65px rgba(46, 125, 50, 0.24);
+}
+
+.stage-icon {
+    font-size: 70px;
+    margin-bottom: 18px;
+}
+
+.stage-number {
+    color: #689f38;
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.stage-title {
+    font-size: 36px;
+    font-weight: bold;
+    color: #2e7d32;
+    margin-bottom: 18px;
+}
+
+.stage-description {
+    color: #666;
+    line-height: 1.6;
+    min-height: 85px;
+    font-size: 17px;
+}
+
+.explore {
+    display: inline-block;
+    margin-top: 25px;
+    padding: 15px 35px;
+    background: #ffc646;
+    color: #222;
+    border-radius: 40px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 19px;
+    transition: 0.3s ease;
+    box-shadow: 0 10px 22px rgba(249, 199, 79, 0.38);
+}
+
+.explore:hover {
+    background: #ffb300;
+    color: white;
+    transform: translateY(-4px) scale(1.06);
+    box-shadow: 0 0 32px rgba(255, 193, 7, 0.75);
+}
+
+.back {
+    display: inline-block;
+    margin-top: 45px;
+    color: #2e7d32;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.back:hover {
+    color: #1b5e20;
+}
+
+@keyframes fadeDown {
+    from {
+        opacity: 0;
+        transform: translateY(-25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes cardFade {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.page-transition {
+    animation: zoomFadeOut 0.45s ease forwards;
+}
+
+@keyframes zoomFadeOut {
+    to {
+        opacity: 0;
+        transform: scale(1.08);
+    }
+}
+
+@media(max-width: 1200px) {
+    .stage-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(max-width: 700px) {
+    h1 {
+        font-size: 38px;
+    }
+
+    .subtitle {
+        font-size: 18px;
+    }
+
+    .stage-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 </head>
 
 <body>
-    <main class="page">
-        <h1>🌻 Choose a Sunflower Life Stage</h1>
-        <p class="subtitle">
-            Select one stage to explore through interactive 3D holographic learning.
-        </p>
 
-        <section class="stage-grid">
-            <a href="/viewer/1/" class="stage-card">
-                <div class="icon">🌰</div>
+<div class="cloud cloud-1"></div>
+<div class="cloud cloud-2"></div>
+<div class="cloud cloud-3"></div>
+
+<div class="container" id="pageContent">
+    <h1>🌻 Choose a Sunflower Life Stage</h1>
+
+    <p class="subtitle">
+        Select one stage to explore through interactive 3D holographic learning.
+    </p>
+
+    <div class="stage-grid">
+        <div class="stage-card">
+            <div>
+                <div class="stage-icon">🌰</div>
                 <div class="stage-number">Stage 1</div>
                 <div class="stage-title">Seed</div>
-                <p class="stage-desc">Every sunflower begins as a tiny seed.</p>
-                <span class="explore">Explore →</span>
-            </a>
+                <div class="stage-description">Every sunflower begins as a tiny seed waiting to grow.</div>
+            </div>
+            <a href="/viewer/1/" class="explore">Explore →</a>
+        </div>
 
-            <a href="/viewer/2/" class="stage-card">
-                <div class="icon">🌱</div>
+        <div class="stage-card">
+            <div>
+                <div class="stage-icon">🌱</div>
                 <div class="stage-number">Stage 2</div>
                 <div class="stage-title">Germination</div>
-                <p class="stage-desc">The seed absorbs water and starts to grow.</p>
-                <span class="explore">Explore →</span>
-            </a>
+                <div class="stage-description">The seed absorbs water and begins sprouting.</div>
+            </div>
+            <a href="/viewer/2/" class="explore">Explore →</a>
+        </div>
 
-            <a href="/viewer/3/" class="stage-card">
-                <div class="icon">🌿</div>
+        <div class="stage-card">
+            <div>
+                <div class="stage-icon">🌿</div>
                 <div class="stage-number">Stage 3</div>
                 <div class="stage-title">Seedling</div>
-                <p class="stage-desc">Small leaves appear as the young plant develops.</p>
-                <span class="explore">Explore →</span>
-            </a>
+                <div class="stage-description">Small green leaves develop as the plant grows.</div>
+            </div>
+            <a href="/viewer/3/" class="explore">Explore →</a>
+        </div>
 
-            <a href="/viewer/4/" class="stage-card">
-                <div class="icon">🌻</div>
+        <div class="stage-card">
+            <div>
+                <div class="stage-icon">🌻</div>
                 <div class="stage-number">Stage 4</div>
-                <div class="stage-title">Mature Plant</div>
-                <p class="stage-desc">The sunflower grows taller and stronger.</p>
-                <span class="explore">Explore →</span>
-            </a>
+                <div class="stage-title">Mature</div>
+                <div class="stage-description">The sunflower becomes tall and strong.</div>
+            </div>
+            <a href="/viewer/4/" class="explore">Explore →</a>
+        </div>
 
-            <a href="/viewer/5/" class="stage-card">
-                <div class="icon">🌼</div>
+        <div class="stage-card">
+            <div>
+                <div class="stage-icon">🌼</div>
                 <div class="stage-number">Stage 5</div>
                 <div class="stage-title">Flowering</div>
-                <p class="stage-desc">The sunflower blooms and shows its bright petals.</p>
-                <span class="explore">Explore →</span>
-            </a>
-        </section>
+                <div class="stage-description">The sunflower blooms into a beautiful flower.</div>
+            </div>
+            <a href="/viewer/5/" class="explore">Explore →</a>
+        </div>
+    </div>
 
-        <a href="/" class="back-link">← Back to Home</a>
-    </main>
+    <a href="/" class="back">← Back to Home</a>
+</div>
+
+<script>
+    const pageContent = document.getElementById("pageContent");
+    const links = document.querySelectorAll(".explore");
+
+    links.forEach(link => {
+        link.addEventListener("click", function(event) {
+            event.preventDefault();
+
+            const destination = this.href;
+            pageContent.classList.add("page-transition");
+
+            setTimeout(() => {
+                window.location.href = destination;
+            }, 450);
+        });
+    });
+
+    window.addEventListener("pageshow", function() {
+        pageContent.classList.remove("page-transition");
+    });
+</script>
+
 </body>
 </html>
