@@ -2,9 +2,1213 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>{{ stage.title }} — Hologram Projection</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body.controls-hidden {
+            cursor: none;
+        }
+
+        .projection-page {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .projection-area {
+            position: absolute;
+            inset: 0 0 94px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #hologramCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            cursor: grab;
+        }
+
+        #hologramCanvas:active {
+            cursor: grabbing;
+        }
+
+        .calibration-guide {
+            position: absolute;
+            inset: 8%;
+            z-index: 5;
+
+            border: 1px dashed rgba(0, 255, 170, 0.5);
+            border-radius: 12px;
+
+            pointer-events: none;
+        }
+
+        .calibration-guide::before,
+        .calibration-guide::after {
+            content: "";
+            position: absolute;
+            background: rgba(255, 196, 70, 0.4);
+        }
+
+        .calibration-guide::before {
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 1px;
+        }
+
+        .calibration-guide::after {
+            top: 0;
+            left: 50%;
+            width: 1px;
+            height: 100%;
+        }
+
+        .guide-label {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+
+            padding: 7px 12px;
+            border-radius: 999px;
+
+            color: rgba(255, 255, 255, 0.75);
+            background: rgba(20, 20, 20, 0.75);
+
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .guides-off .calibration-guide {
+            display: none;
+        }
+
+        .status {
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            z-index: 30;
+
+            transform: translateX(-50%);
+
+            padding: 9px 16px;
+            border-radius: 999px;
+
+            color: #fff;
+            background: rgba(25, 25, 25, 0.82);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+
+            font-size: 13px;
+            font-weight: bold;
+
+            backdrop-filter: blur(12px);
+
+            transition:
+                opacity 0.3s ease,
+                transform 0.3s ease;
+        }
+
+        .status.ready {
+            color: #aaffca;
+        }
+
+        .status.error {
+            color: #ffaaaa;
+        }
+
+        .control-bar {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 50;
+
+            min-height: 94px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 9px;
+
+            padding: 13px 16px;
+
+            background: rgba(15, 15, 15, 0.96);
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+
+            backdrop-filter: blur(16px);
+
+            transition:
+                opacity 0.35s ease,
+                transform 0.35s ease;
+        }
+
+        .controls-hidden .control-bar {
+            opacity: 0;
+            transform: translateY(110%);
+            pointer-events: none;
+        }
+
+        .controls-hidden .status {
+            opacity: 0;
+            transform: translate(-50%, -12px);
+            pointer-events: none;
+        }
+
+        .control-button {
+            min-height: 46px;
+
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 13px;
+
+            padding: 11px 15px;
+
+            color: #fff;
+            background: rgba(255, 255, 255, 0.09);
+
+            font-size: 13px;
+            font-weight: bold;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease,
+                border-color 0.2s ease;
+        }
+
+        .control-button:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 196, 70, 0.22);
+            border-color: rgba(255, 196, 70, 0.6);
+        }
+
+        .control-button.active {
+            color: #181818;
+            background: #ffc446;
+            border-color: #ffc446;
+        }
+
+        .control-button.exit {
+            text-decoration: none;
+            background: rgba(155, 42, 42, 0.38);
+            border-color: rgba(255, 100, 100, 0.4);
+        }
+
+        .control-group {
+            min-height: 46px;
+
+            display: flex;
+            align-items: center;
+
+            overflow: hidden;
+
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 13px;
+
+            background: rgba(255, 255, 255, 0.09);
+        }
+
+        .group-label {
+            min-width: 72px;
+            padding: 0 10px;
+
+            color: #d7d7d7;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .small-button {
+            width: 43px;
+            height: 46px;
+
+            border: none;
+
+            color: #fff;
+            background: transparent;
+
+            font-size: 19px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        .small-button:hover {
+            background: rgba(255, 196, 70, 0.22);
+        }
+
+        .control-value {
+            min-width: 60px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+
+            color: #fff;
+            background: #000;
+
+            transition: opacity 0.4s ease;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 54px;
+            height: 54px;
+
+            border: 5px solid rgba(255, 255, 255, 0.18);
+            border-top-color: #ffc446;
+            border-radius: 50%;
+
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .projection-area {
+                inset-bottom: 150px;
+            }
+
+            .control-bar {
+                min-height: 150px;
+            }
+
+            .control-button {
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+        }
+    </style>
 </head>
+
 <body>
+
+<div
+    id="projectionPage"
+    class="projection-page guides-on"
+>
+    <div
+        id="loadingScreen"
+        class="loading-screen"
+    >
+        <div class="loading-spinner"></div>
+        <p>Loading {{ stage.title }} hologram...</p>
+    </div>
+
+    <div
+        id="status"
+        class="status"
+    >
+        🟡 Loading model...
+    </div>
+
+    <main
+        id="projectionArea"
+        class="projection-area"
+    >
+        <canvas id="hologramCanvas"></canvas>
+
+        <div class="calibration-guide">
+            <span class="guide-label">
+                Projection calibration area
+            </span>
+        </div>
+    </main>
+
+    <nav class="control-bar">
+
+        <button
+            id="soundButton"
+            class="control-button"
+            type="button"
+        >
+            🔇 Sound Off
+        </button>
+
+        <button
+            id="rotationButton"
+            class="control-button active"
+            type="button"
+        >
+            🔄 Rotation On
+        </button>
+
+        <div class="control-group">
+            <span class="group-label">Size</span>
+
+            <button
+                id="sizeDown"
+                class="small-button"
+                type="button"
+            >
+                −
+            </button>
+
+            <span
+                id="sizeValue"
+                class="control-value"
+            >
+                100%
+            </span>
+
+            <button
+                id="sizeUp"
+                class="small-button"
+                type="button"
+            >
+                +
+            </button>
+        </div>
+
+        <div class="control-group">
+            <span class="group-label">Horizontal</span>
+
+            <button
+                id="moveLeft"
+                class="small-button"
+                type="button"
+            >
+                ←
+            </button>
+
+            <span
+                id="horizontalValue"
+                class="control-value"
+            >
+                0
+            </span>
+
+            <button
+                id="moveRight"
+                class="small-button"
+                type="button"
+            >
+                →
+            </button>
+        </div>
+
+        <div class="control-group">
+            <span class="group-label">Vertical</span>
+
+            <button
+                id="moveDown"
+                class="small-button"
+                type="button"
+            >
+                ↓
+            </button>
+
+            <span
+                id="verticalValue"
+                class="control-value"
+            >
+                0
+            </span>
+
+            <button
+                id="moveUp"
+                class="small-button"
+                type="button"
+            >
+                ↑
+            </button>
+        </div>
+
+        <div class="control-group">
+            <span class="group-label">Brightness</span>
+
+            <button
+                id="brightnessDown"
+                class="small-button"
+                type="button"
+            >
+                −
+            </button>
+
+            <span
+                id="brightnessValue"
+                class="control-value"
+            >
+                180%
+            </span>
+
+            <button
+                id="brightnessUp"
+                class="small-button"
+                type="button"
+            >
+                +
+            </button>
+        </div>
+
+        <button
+            id="mirrorButton"
+            class="control-button"
+            type="button"
+        >
+            🪞 Mirror Off
+        </button>
+
+        <button
+            id="flipButton"
+            class="control-button"
+            type="button"
+        >
+            ↕ Flip Off
+        </button>
+
+        <button
+            id="guidesButton"
+            class="control-button active"
+            type="button"
+        >
+            📐 Guides On
+        </button>
+
+        <button
+            id="resetButton"
+            class="control-button"
+            type="button"
+        >
+            ↺ Reset
+        </button>
+
+        <button
+            id="fullscreenButton"
+            class="control-button"
+            type="button"
+        >
+            ⛶ Fullscreen
+        </button>
+
+        <a
+            href="/viewer/{{ stage_id }}/"
+            class="control-button exit"
+        >
+            ← Exit
+        </a>
+
+    </nav>
+</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three":
+            "https://unpkg.com/three@0.160.0/build/three.module.js",
+
+        "three/addons/":
+            "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+    import * as THREE from "three";
+
+    import {
+        GLTFLoader
+    } from "three/addons/loaders/GLTFLoader.js";
+
+    import {
+        OrbitControls
+    } from "three/addons/controls/OrbitControls.js";
+
+    const stageId = "{{ stage_id }}";
+
+    const modelPath =
+        `/media/models/stage${stageId}.glb`;
+
+    const audioPath =
+        `/media/audio/stage${stageId}.mp3`;
+
+    const DEFAULT_SETTINGS = {
+        scale: 1,
+        horizontal: 0,
+        vertical: 0,
+        brightness: 1.8,
+        mirror: false,
+        flip: false,
+        rotation: true
+    };
+
+    let settings = {
+        ...DEFAULT_SETTINGS
+    };
+
+    const projectionPage =
+        document.getElementById("projectionPage");
+
+    const projectionArea =
+        document.getElementById("projectionArea");
+
+    const canvas =
+        document.getElementById("hologramCanvas");
+
+    const loadingScreen =
+        document.getElementById("loadingScreen");
+
+    const statusElement =
+        document.getElementById("status");
+
+    const soundButton =
+        document.getElementById("soundButton");
+
+    const rotationButton =
+        document.getElementById("rotationButton");
+
+    const mirrorButton =
+        document.getElementById("mirrorButton");
+
+    const flipButton =
+        document.getElementById("flipButton");
+
+    const guidesButton =
+        document.getElementById("guidesButton");
+
+    const resetButton =
+        document.getElementById("resetButton");
+
+    const fullscreenButton =
+        document.getElementById("fullscreenButton");
+
+    const sizeValue =
+        document.getElementById("sizeValue");
+
+    const horizontalValue =
+        document.getElementById("horizontalValue");
+
+    const verticalValue =
+        document.getElementById("verticalValue");
+
+    const brightnessValue =
+        document.getElementById("brightnessValue");
+
+    const scene = new THREE.Scene();
+
+    const camera =
+        new THREE.PerspectiveCamera(
+            36,
+            1,
+            0.1,
+            1000
+        );
+
+    camera.position.set(0, 0.25, 5);
+
+    const renderer =
+        new THREE.WebGLRenderer({
+            canvas,
+            antialias: true,
+            alpha: false,
+            powerPreference: "high-performance"
+        });
+
+    renderer.setClearColor(0x000000, 1);
+
+    renderer.setPixelRatio(
+        Math.min(window.devicePixelRatio, 2)
+    );
+
+    renderer.outputColorSpace =
+        THREE.SRGBColorSpace;
+
+    renderer.toneMapping =
+        THREE.ACESFilmicToneMapping;
+
+    const modelGroup =
+        new THREE.Group();
+
+    scene.add(modelGroup);
+
+    const hemisphereLight =
+        new THREE.HemisphereLight(
+            0xffffff,
+            0x101610,
+            3.5
+        );
+
+    scene.add(hemisphereLight);
+
+    const mainLight =
+        new THREE.DirectionalLight(
+            0xffffff,
+            4.5
+        );
+
+    mainLight.position.set(5, 8, 6);
+    scene.add(mainLight);
+
+    const frontLight =
+        new THREE.DirectionalLight(
+            0xffffff,
+            3
+        );
+
+    frontLight.position.set(0, 2, 7);
+    scene.add(frontLight);
+
+    const sideLight =
+        new THREE.DirectionalLight(
+            0xffffff,
+            2.2
+        );
+
+    sideLight.position.set(-5, 3, 2);
+    scene.add(sideLight);
+
+    const controls =
+        new OrbitControls(
+            camera,
+            renderer.domElement
+        );
+
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+
+    controls.enablePan = false;
+
+    controls.enableZoom = true;
+    controls.minDistance = 2;
+    controls.maxDistance = 12;
+
+    controls.autoRotate = false;
+
+    controls.addEventListener(
+        "start",
+        () => {
+            settings.rotation = false;
+            applySettings();
+            showControls();
+        }
+    );
+
+    controls.addEventListener(
+        "change",
+        showControls
+    );
+
+    controls.addEventListener(
+        "end",
+        showControls
+    );
+
+    let controlsTimer = null;
+
+    const narrationAudio =
+        new Audio(audioPath);
+
+    narrationAudio.preload = "auto";
+
+    narrationAudio.addEventListener(
+        "error",
+        () => {
+            soundButton.textContent =
+                "🔇 Audio Unavailable";
+
+            soundButton.disabled = true;
+            soundButton.style.opacity = "0.5";
+        }
+    );
+
+    function prepareModel(model) {
+        const box =
+            new THREE.Box3().setFromObject(model);
+
+        const center =
+            box.getCenter(
+                new THREE.Vector3()
+            );
+
+        const size =
+            box.getSize(
+                new THREE.Vector3()
+            );
+
+        model.position.sub(center);
+
+        const largestDimension =
+            Math.max(
+                size.x,
+                size.y,
+                size.z
+            );
+
+        if (largestDimension > 0) {
+            const fittedScale =
+                2.7 / largestDimension;
+
+            model.scale.setScalar(
+                fittedScale
+            );
+        }
+
+        model.traverse((child) => {
+            if (child.isMesh && child.material) {
+                child.material.needsUpdate = true;
+            }
+        });
+
+        return model;
+    }
+
+    const loader =
+        new GLTFLoader();
+
+    loader.load(
+        modelPath,
+
+        (gltf) => {
+            const model =
+                prepareModel(gltf.scene);
+
+            modelGroup.add(model);
+
+            applySettings();
+
+            loadingScreen.classList.add(
+                "hidden"
+            );
+
+            statusElement.textContent =
+                "🟢 Ready for projection";
+
+            statusElement.classList.add(
+                "ready"
+            );
+        },
+
+        undefined,
+
+        (error) => {
+            console.error(error);
+
+            statusElement.textContent =
+                "🔴 Model failed to load";
+
+            statusElement.classList.add(
+                "error"
+            );
+        }
+    );
+
+    function applySettings() {
+        modelGroup.scale.setScalar(
+            settings.scale
+        );
+
+        modelGroup.position.x =
+            settings.horizontal;
+
+        modelGroup.position.y =
+            settings.vertical;
+
+        renderer.toneMappingExposure =
+            settings.brightness;
+
+        canvas.style.transform = `
+            scaleX(${settings.mirror ? -1 : 1})
+            scaleY(${settings.flip ? -1 : 1})
+        `;
+
+        rotationButton.textContent =
+            settings.rotation
+                ? "🔄 Rotation On"
+                : "⏸ Rotation Off";
+
+        rotationButton.classList.toggle(
+            "active",
+            settings.rotation
+        );
+
+        mirrorButton.textContent =
+            settings.mirror
+                ? "🪞 Mirror On"
+                : "🪞 Mirror Off";
+
+        mirrorButton.classList.toggle(
+            "active",
+            settings.mirror
+        );
+
+        flipButton.textContent =
+            settings.flip
+                ? "↕ Flip On"
+                : "↕ Flip Off";
+
+        flipButton.classList.toggle(
+            "active",
+            settings.flip
+        );
+
+        sizeValue.textContent =
+            `${Math.round(
+                settings.scale * 100
+            )}%`;
+
+        horizontalValue.textContent =
+            settings.horizontal.toFixed(1);
+
+        verticalValue.textContent =
+            settings.vertical.toFixed(1);
+
+        brightnessValue.textContent =
+            `${Math.round(
+                settings.brightness * 100
+            )}%`;
+    }
+
+    document
+        .getElementById("sizeDown")
+        .addEventListener("click", () => {
+            settings.scale =
+                Math.max(
+                    0.4,
+                    settings.scale - 0.1
+                );
+
+            applySettings();
+            showControls();
+        });
+
+    document
+        .getElementById("sizeUp")
+        .addEventListener("click", () => {
+            settings.scale =
+                Math.min(
+                    2.5,
+                    settings.scale + 0.1
+                );
+
+            applySettings();
+            showControls();
+        });
+
+    document
+        .getElementById("moveLeft")
+        .addEventListener("click", () => {
+            settings.horizontal -= 0.1;
+            applySettings();
+            showControls();
+        });
+
+    document
+        .getElementById("moveRight")
+        .addEventListener("click", () => {
+            settings.horizontal += 0.1;
+            applySettings();
+            showControls();
+        });
+
+    document
+        .getElementById("moveDown")
+        .addEventListener("click", () => {
+            settings.vertical -= 0.1;
+            applySettings();
+            showControls();
+        });
+
+    document
+        .getElementById("moveUp")
+        .addEventListener("click", () => {
+            settings.vertical += 0.1;
+            applySettings();
+            showControls();
+        });
+
+    document
+        .getElementById("brightnessDown")
+        .addEventListener("click", () => {
+            settings.brightness =
+                Math.max(
+                    0.5,
+                    settings.brightness - 0.1
+                );
+
+            applySettings();
+            showControls();
+        });
+
+    document
+        .getElementById("brightnessUp")
+        .addEventListener("click", () => {
+            settings.brightness =
+                Math.min(
+                    3,
+                    settings.brightness + 0.1
+                );
+
+            applySettings();
+            showControls();
+        });
+
+    rotationButton.addEventListener(
+        "click",
+        () => {
+            settings.rotation =
+                !settings.rotation;
+
+            applySettings();
+            showControls();
+        }
+    );
+
+    mirrorButton.addEventListener(
+        "click",
+        () => {
+            settings.mirror =
+                !settings.mirror;
+
+            applySettings();
+            showControls();
+        }
+    );
+
+    flipButton.addEventListener(
+        "click",
+        () => {
+            settings.flip =
+                !settings.flip;
+
+            applySettings();
+            showControls();
+        }
+    );
+
+    soundButton.addEventListener(
+        "click",
+        async () => {
+            if (narrationAudio.paused) {
+                try {
+                    await narrationAudio.play();
+
+                    soundButton.textContent =
+                        "🔊 Sound On";
+
+                    soundButton.classList.add(
+                        "active"
+                    );
+                }
+                catch (error) {
+                    console.error(error);
+                }
+            }
+            else {
+                narrationAudio.pause();
+
+                soundButton.textContent =
+                    "🔇 Sound Off";
+
+                soundButton.classList.remove(
+                    "active"
+                );
+            }
+
+            showControls();
+        }
+    );
+
+    guidesButton.addEventListener(
+        "click",
+        () => {
+            const guidesOff =
+                projectionPage.classList.toggle(
+                    "guides-off"
+                );
+
+            projectionPage.classList.toggle(
+                "guides-on",
+                !guidesOff
+            );
+
+            guidesButton.textContent =
+                guidesOff
+                    ? "📐 Guides Off"
+                    : "📐 Guides On";
+
+            guidesButton.classList.toggle(
+                "active",
+                !guidesOff
+            );
+
+            showControls();
+        }
+    );
+
+    resetButton.addEventListener(
+        "click",
+        () => {
+            settings = {
+                ...DEFAULT_SETTINGS
+            };
+
+            camera.position.set(0, 0.25, 5);
+            controls.target.set(0, 0, 0);
+
+            controls.update();
+            applySettings();
+            showControls();
+        }
+    );
+
+    fullscreenButton.addEventListener(
+        "click",
+        async () => {
+            if (!document.fullscreenElement) {
+                await document
+                    .documentElement
+                    .requestFullscreen();
+
+                fullscreenButton.textContent =
+                    "⛶ Exit Fullscreen";
+            }
+            else {
+                await document.exitFullscreen();
+
+                fullscreenButton.textContent =
+                    "⛶ Fullscreen";
+            }
+
+            showControls();
+        }
+    );
+
+    function resizeRenderer() {
+        const width =
+            projectionArea.clientWidth;
+
+        const height =
+            projectionArea.clientHeight;
+
+        camera.aspect =
+            width / height;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            width,
+            height,
+            false
+        );
+    }
+
+    function showControls() {
+        document.body.classList.remove(
+            "controls-hidden"
+        );
+
+        clearTimeout(controlsTimer);
+
+        controlsTimer =
+            setTimeout(() => {
+                document.body.classList.add(
+                    "controls-hidden"
+                );
+            }, 5000);
+    }
+
+    [
+        "mousemove",
+        "mousedown",
+        "mouseup",
+        "touchstart",
+        "touchmove",
+        "touchend",
+        "keydown",
+        "wheel"
+    ].forEach((eventName) => {
+        window.addEventListener(
+            eventName,
+            showControls,
+            { passive: true }
+        );
+    });
+
+    let previousTime = 0;
+
+    function animate(currentTime) {
+        requestAnimationFrame(animate);
+
+        const delta =
+            Math.min(
+                (currentTime -
+                    previousTime) / 1000,
+                0.1
+            );
+
+        previousTime =
+            currentTime;
+
+        if (settings.rotation) {
+            modelGroup.rotation.y +=
+                delta * 0.65;
+        }
+
+        controls.update();
+
+        renderer.render(
+            scene,
+            camera
+        );
+    }
+
+    applySettings();
+    resizeRenderer();
+    showControls();
+
+    requestAnimationFrame(animate);
+
+    window.addEventListener(
+        "resize",
+        resizeRenderer
+    );
+</script>
 
 </body>
 </html>
