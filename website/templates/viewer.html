@@ -500,7 +500,7 @@
     const narrationButton = document.getElementById("narrationButton");
 
     const narrationAudio = new Audio(
-        "/media/audio/stage{{ stage_id }}.mp3"
+        "/static/audio/stage{{ stage_id }}.mp3"
     );
 
     narrationAudio.preload = "auto";
@@ -645,7 +645,7 @@
     const loader = new GLTFLoader();
 
     const modelPath =
-        "/media/models/stage{{ stage_id }}.glb";
+        "/static/models/stage{{ stage_id }}.glb";
 
     loader.load(
         modelPath,
