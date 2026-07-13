@@ -526,28 +526,40 @@
     renderer.setSize(modelBox.clientWidth, modelBox.clientHeight);
 
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.8;
+    renderer.toneMapping = THREE.NeutralToneMapping;
+    renderer.toneMappingExposure = 2.1;
 
     const hemisphereLight = new THREE.HemisphereLight(
         0xffffff,
-        0xd8ffd1,
-        3.5
+        0xddeed8,
+        4.2
     );
 
     scene.add(hemisphereLight);
 
-    const mainLight = new THREE.DirectionalLight(0xffffff, 4.5);
+    const mainLight = new THREE.DirectionalLight(0xffffff, 4.2);
     mainLight.position.set(5, 8, 5);
     scene.add(mainLight);
 
-    const frontLight = new THREE.DirectionalLight(0xffffff, 2.8);
-    frontLight.position.set(0, 3, 6);
+    const frontLight = new THREE.DirectionalLight(0xffffff, 3.2);
+    frontLight.position.set(0, 3, 7);
     scene.add(frontLight);
 
-    const sideLight = new THREE.DirectionalLight(0xffffff, 2);
-    sideLight.position.set(-5, 4, -3);
-    scene.add(sideLight);
+    const leftFillLight = new THREE.DirectionalLight(0xffffff, 2.4);
+    leftFillLight.position.set(-5, 2, 4);
+    scene.add(leftFillLight);
+
+    const rightFillLight = new THREE.DirectionalLight(0xffffff, 2.4);
+    rightFillLight.position.set(5, 2, 4);
+    scene.add(rightFillLight);
+
+    const bottomFillLight = new THREE.DirectionalLight(0xffffff, 3.2);
+    bottomFillLight.position.set(0, -6, 3);
+    scene.add(bottomFillLight);
+
+    const backLight = new THREE.DirectionalLight(0xffffff, 2);
+    backLight.position.set(0, 3, -6);
+    scene.add(backLight);
 
     const controls = new OrbitControls(
         camera,
