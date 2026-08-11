@@ -39,7 +39,7 @@
 
         .projection-area {
             position: absolute;
-            inset: 0 0 94px;
+            inset: 0 0 150px;
             overflow: hidden;
             background: #000;
         }
@@ -312,7 +312,7 @@
 
         @media (max-width: 1000px) {
             .projection-area {
-                inset-bottom: 150px;
+                inset-bottom: 0 0 150px;
             }
 
             .control-bar {
@@ -324,6 +324,55 @@
                 padding: 10px 12px;
             }
         }
+
+        .caption-overlay {
+            position: absolute;
+            left: 50%;
+            bottom: 35px;
+            z-index: 20;
+            width: min(850px, 85%);
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+
+            transition:
+                opacity 0.25s ease,
+                transform 0.25s ease;
+        }
+
+        .caption-overlay.visible {
+            opacity: 1;
+        }
+
+        .caption-text {
+            max-width: 850px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.78);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+            font-size: clamp(15px, 1.5vw, 22px);
+            line-height: 1.45;
+            font-weight: 600;
+            text-align: center;
+            backdrop-filter: blur(8px);
+        }
+
+        @media (max-width: 700px) {
+             .caption-overlay {
+                bottom: 20px;
+                width: 90%;
+             }
+
+             .caption-text {
+                padding: 10px 14px;
+                font-size: 14px;
+            }
+        }
+
     </style>
 </head>
 
@@ -353,6 +402,10 @@
         class="projection-area"
     >
         <canvas id="hologramCanvas"></canvas>
+
+        <div id="captionOverlay" class="caption-overlay">
+            <div id="captionText" class="caption-text"></div>
+        </div>
 
         <div class="calibration-guide">
             <span class="guide-label">
@@ -568,6 +621,68 @@
     const audioPath =
         `/static/audio/stage${stageId}.mp3`;
 
+    const captions = {
+
+            "1": [
+                [0.0, 4.2, "The seed stage is the beginning of a plant's life cycle."],
+                [4.2, 8.5, "A seed contains a tiny young plant called an embryo,"],
+                [8.5, 13.8, "along with stored food that provides energy for the plant as it begins to grow."],
+                [13.8, 18.2, "The seed also has a protective covering called the seed coat,"],
+                [18.2, 23.5, "which protects the embryo from damage and helps prevent it from drying out."],
+                [23.5, 27.0, "At this stage, the seed may remain inactive"],
+                [27.0, 30.5, "until it receives the conditions it needs to grow."],
+                [30.5, 35.8, "When the seed gets enough water, oxygen, and a suitable temperature,"],
+                [35.8, 38.5, "it is ready to begin germination."]
+            ],
+
+            "2": [
+                [0.0, 5.5, "Germination is the process in which a seed begins to grow into a new plant."],
+                [5.5, 9.7, "When the seed absorbs water, it becomes larger,"],
+                [9.7, 13.0, "and the seed coat begins to break open."],
+                [13.0, 17.5, "The embryo inside the seed starts developing and growing."],
+                [17.5, 22.0, "Usually, the first structure to emerge is the young root."],
+                [22.0, 24.7, "It grows downward into the soil,"],
+                [24.7, 28.0, "while the young shoot begins to grow upward."],
+                [28.0, 33.3, "This allows the developing plant to obtain water and minerals from the soil"],
+                [33.3, 35.5, "and move toward the light."]
+            ],
+
+            "3": [
+                [0.0, 6.2, "A seedling is a young plant that has developed beyond the early stages of germination."],
+                [6.2, 11.5, "It usually has visible roots, a developing stem, and young leaves."],
+                [11.5, 15.8, "At this stage, the plant becomes more dependent on its leaves"],
+                [15.8, 19.0, "for producing food through photosynthesis."],
+                [19.0, 23.2, "The leaves use sunlight, water, and carbon dioxide"],
+                [23.2, 27.0, "to make food that provides energy for growth."],
+                [27.0, 32.0, "As the seedling receives enough sunlight, water, and nutrients,"],
+                [32.0, 35.5, "it continues to grow larger and stronger."]
+            ],
+
+            "4": [
+                [0.0, 5.7, "The mature plant is the stage when the plant has reached its full or near-full size,"],
+                [5.7, 8.3, "and has well-developed structures."],
+                [8.3, 11.9, "Its roots are strong and spread through the soil,"],
+                [11.9, 15.1, "while its stem and leaves are fully developed."],
+                [15.1, 19.3, "The mature plant can carry out photosynthesis efficiently"],
+                [19.3, 24.6, "and produce enough food to support its continued growth and development."],
+                [24.6, 29.8, "It is also capable of developing reproductive structures, such as flowers,"],
+                [29.8, 33.1, "although the plant may not be flowering yet."]
+            ],
+
+            "5": [
+                [0.0, 5.2, "The flowering stage occurs when a mature plant begins producing flowers."],
+                [5.2, 8.9, "Flowers are the reproductive structures of many plants,"],
+                [8.9, 12.5, "and play an important role in producing seeds."],
+                [12.5, 17.2, "During this stage, the plant uses the food and energy it has produced"],
+                [17.2, 20.3, "to support flowering and reproduction."],
+                [20.3, 23.9, "After successful pollination and fertilization,"],
+                [23.9, 29.4, "flowers can develop into fruits containing seeds in many plant species."],
+                [29.4, 34.1, "The seeds produced by the flowering plant can eventually be dispersed,"],
+                [34.1, 38.9, "and when they receive the proper conditions, begin to germinate."],
+                [38.9, 42.1, "This starts the plant life cycle again."]
+            ]
+    };
+
     const DEFAULT_SETTINGS = {
         scale: 1,
         horizontal: 0,
@@ -596,6 +711,12 @@
 
     const statusElement =
         document.getElementById("status");
+
+    const captionOverlay =
+        document.getElementById("captionOverlay");
+
+    const captionText =
+        document.getElementById("captionText");
 
     const soundButton =
         document.getElementById("soundButton");
@@ -710,7 +831,7 @@
         );
 
     rightFillLight.position.set(5, 2, 4);
-    scene.add(leftFillLight);
+    scene.add(rightFillLight);
 
     const bottomFillLight = new THREE.DirectionalLight(0xffffff, 3.2);
     bottomFillLight.position.set(0, -6, 3);
@@ -771,6 +892,61 @@
 
             soundButton.disabled = true;
             soundButton.style.opacity = "0.5";
+        }
+    );
+    function updateCaption() {
+        const stageCaptions =
+            captions[stageId] || [];
+
+        const currentTime =
+            narrationAudio.currentTime;
+
+        const currentCaption =
+            stageCaptions.find(
+                ([start, end]) =>
+                    currentTime >= start &&
+                    currentTime < end
+                );
+
+        if (currentCaption) {
+            const text =
+                currentCaption[2];
+            captionText.textContent =
+                text;
+            captionOverlay.classList.add(
+                "visible"
+            );
+        }
+        else {
+
+            captionText.textContent = "";
+
+            captionOverlay.classList.remove(
+                "visible"
+            );
+        }
+    }
+
+    narrationAudio.addEventListener(
+        "timeupdate",
+        updateCaption
+    );
+
+    narrationAudio.addEventListener(
+        "ended",
+        () => {
+        captionText.textContent = "";
+
+            captionOverlay.classList.remove(
+                "visible"
+            );
+
+            soundButton.textContent =
+                "🔇 Sound Off";
+
+            soundButton.classList.remove(
+                "active"
+            );
         }
     );
 
@@ -1051,6 +1227,8 @@
                     soundButton.classList.add(
                         "active"
                     );
+
+                    updateCaption();
                 }
                 catch (error) {
                     console.error(error);
@@ -1064,6 +1242,13 @@
 
                 soundButton.classList.remove(
                     "active"
+                );
+
+                captionText.textContent =
+                    "";
+
+                captionOverlay.classList.remove(
+                    "visible"
                 );
             }
 
