@@ -671,8 +671,8 @@
                 [0.0, 4.0, "The flowering stage occurs when a mature plant begins producing flowers."],
                 [4.0, 6.9, "Flowers are the reproductive structures of many plants,"],
                 [6.9, 9.5, "and play an important role in producing seeds."],
-                [9.5, 32.2, "During this stage, the plant uses the food and energy it has produced"],
-                [32.2, 16.3, "to support flowering and reproduction."],
+                [9.5, 13.2, "During this stage, the plant uses the food and energy it has produced"],
+                [13.2, 16.3, "to support flowering and reproduction."],
                 [16.3, 19.9, "After successful pollination and fertilization,"],
                 [19.9, 23.4, "flowers can develop into fruits containing seeds in many plant species."],
                 [23.4, 27.1, "The seeds produced by the flowering plant can eventually be dispersed,"],
@@ -1309,21 +1309,47 @@
         "click",
         async () => {
             if (!document.fullscreenElement) {
-                await document
-                    .documentElement
-                    .requestFullscreen();
+                try{
+                    await document.documentElement.requestFullscreen();
 
-                fullscreenButton.textContent =
-                    "⛶ Exit Fullscreen";
+                    fullscreenButton.textContent =
+                        "⛶ Exit Fullscreen";
+
+                    clearTimeout(controlsTimer);
+                        document.body.classList.add("controls-hidden");
+
+                } catch (error) {
+                    console.error(
+                        "Fullscreen request failed:",
+                        error
+                    );
+                }
             }
             else {
                 await document.exitFullscreen();
 
                 fullscreenButton.textContent =
                     "⛶ Fullscreen";
+
+                showControls();
+            }
+        }
+    );
+
+    document.addEventListener(
+        "fullscreenchange",
+        () => {
+            if (document.fullscreenElement) {
+                clearTimeout(controlsTimer);
+                document.body.classList.add("controls-hidden");
+            }
+            else {
+                showControls();
+                fullscreenButton.textContent =
+                    "⛶ Fullscreen";
             }
 
-            showControls();
+            resizeRenderer();
         }
     );
 
